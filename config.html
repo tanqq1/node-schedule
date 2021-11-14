@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>定时任务配置页面</title>
+</head>
+
+<body>
+    <form id="scheduleForm" onsubmit="return saveParams()">
+        <div>
+            <label for="taskName">定input时任务名称</label>
+            <input id="taskName" required placeholder="请输入英文名称"></input>
+        </div>
+        <div>
+            <label for="persons">提醒人员</label>
+            <textarea id="persons" required></textarea>
+        </div>
+        <div>
+            <label for="period">提醒周期</label>
+            <select id="period" default="day" required>
+                <option value="day">工作日</option>
+                <option value="week">周</option>
+            </select>
+        </div>
+        <!-- <div>
+            <label for="relative">提醒范围</label>
+            <select id="relative" default="one" required>
+                <option value="one">个人</option>
+                <option value="all">所有</option>
+            </select>
+        </div> -->
+        <div>
+            <label for="robotKey">机器人key</label>
+            <input id="robotKey" width="150px" required></input>
+        </div>
+        <button type="submit">新增</button>
+    </form>
+
+</body>
+<script>
+    function getFormElementValue(form, key) {
+        return form.elements[key].value
+    }
+
+    function saveParams() {
+        const form = document.querySelector('#scheduleForm')
+
+        const bodyParams = {
+            persons: getFormElementValue(form, 'persons'),
+            period: getFormElementValue(form, 'period'),
+            robotKey: getFormElementValue(form, 'robotKey'),
+            taskName: getFormElementValue(form, 'taskName'),
+        }
+
+        fetch('/config/save', {
+            method: 'post',
+            headers: {
+                'Content-Type': 'application/json;charset=UTF-8'
+            },
+            body: JSON.stringify(bodyParams)
+        }).then(res => {
+            console.log("res.........", res.json())
+        })
+
+        return false
+    }
+</script>
+
+</html>
