@@ -3,6 +3,7 @@ const path = require('path')
 var fs = require('fs');
 var url = require('url');
 var bodyParser = require('body-parser');
+var mySchedule = require('./index')
 
 var app = express()
 var fileSuffix = '.schedule.txt'
@@ -14,16 +15,10 @@ app.get('/', function (req, res) {
     res.send("hello world")
 })
 app.post('/config/save', function (req, res) {
-    console.log("请求参数2......", req.body, typeof req.body)
     const taskFileName = req.body.taskName
 
-    // fs.open(taskFileName + 'schedule.txt', 'a+', function (err, fd) {
-    //     if (err) {
-    //         console.log("文件打开失败：", err)
-    //     } else {
-    // }
-    // })
-    fs.writeFile(taskFileName + fileSuffix, JSON.stringify(req.body) + '\n', { flag: 'a+', 'encoding': 'utf-8' }, function (err) {
+    fs.writeFile(taskFileName + fileSuffix, JSON.stringify(req.body) + '\n', { flag: 'w+', 'encoding': 'utf-8' }, function (err) {
+    // fs.writeFile(taskFileName + fileSuffix, JSON.stringify(req.body) + '\n', { flag: 'a+', 'encoding': 'utf-8' }, function (err) {
         if (err) {
             console.log("文件写入失败....")
         } else {
@@ -45,7 +40,8 @@ app.post('/config/save', function (req, res) {
             })
             scheduleFiles.forEach(file => {
                 var fileStr = fs.readFileSync(file, 'utf-8')
-                console.log("读取的文件内容：", file, "::::", fileStr, JSON.parse(fileStr))
+                mySchedule.createSchedule(fileStr)
+                console.log("读取的文件内容：", file, "::::", fileStr)
             })
         }
     })
