@@ -11,15 +11,42 @@ exports = module.exports = {};
 
 exports.createSchedule = createSchedule
 
-function createSchedule(fileStr) {
-    /**值班人员列表 */
-    var dutyUsers = []
-    /**当前值班人员 */
-    var currentDuty = ''
-    var configs = handleFileJson(fileStr)
-    // cron.schedule("* * 18 * * *", function () {
-    //     console.log("running a task at 18 clock every day");
-    // });
+function createSchedule(filePath) {
+    // 值班周期
+    var isDay = config.period === 'day'
+    // 机器人key
+    var robotKey = config.robotKey
+    cron.schedule("* * 18 * * *", function () {
+        console.log("running a task at 18 clock every day");
+    });
+}
+
+// 定时任务处理器
+function scheduleHandler(filePath) {
+    var fileContent = fs.readFileSync(filePath)
+    try {
+        var config = JSON.parse(fileContent)
+        if (!config.currentDuty) {
+            config.currentDuty = config.persons[0]
+        }
+        var nextDutyIndex = config.persons.findIndex() + 1
+        if (nextDutyIndex > config.persons.length) {
+            nextDutyIndex = 0
+        }
+        // 值班周期
+        var isDay = config.period === 'day'
+        // 如果是日提醒，那么走日提醒的逻辑，可复用现在的值班逻辑
+
+        // 如果是周提醒，则本周第一天提醒一次 & 本周最后一天做下周的值班预告
+
+        // 定时任务执行成功的话则记录下新的值班人
+        // config.currentDuty = config.persons[nextDutyIndex]
+        // fs.writeFileSync(filePath, JSON.stringify(config), { flag: 'w+', 'encoding': 'utf-8' })
+
+
+    } catch (e) {
+        console.log(e)
+    }
 }
 
 function handleFileJson(fileStr) {
@@ -33,6 +60,12 @@ function handleFileJson(fileStr) {
     return bodyParams
 }
 
+function getUserList(userStr) {
+    return userStr.split(',').filter(item => !!item)
+}
+
+exports.getUserList = getUserList
+
 // 每天18点执行
 var task = cron.schedule("* * 18 * * *", function () {
     console.log("running a task every minute");
@@ -40,6 +73,17 @@ var task = cron.schedule("* * 18 * * *", function () {
     // 写入日志
     // fs.link("./server.log",)
 });
+
+function addSchedule() {
+    cron.schedule("1,2,3,4,5,6 * * * * *", function () {
+        console.log("running a task every minute");
+
+        // 写入日志
+        // fs.link("./server.log",)
+    });
+}
+
+exports.addSchedule = addSchedule
 
 // setTimeout(() => {
 //     if (task) {

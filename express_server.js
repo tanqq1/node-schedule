@@ -3,10 +3,10 @@ const path = require('path')
 var fs = require('fs');
 var url = require('url');
 var bodyParser = require('body-parser');
-var mySchedule = require('./index')
+var { addSchedule, getUserList } = require('./index')
 
 var app = express()
-var fileSuffix = '.schedule.txt'
+var fileSuffix = '.schedule.js'
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -15,23 +15,19 @@ app.get('/', function (req, res) {
     res.send("hello world")
 })
 app.post('/config/save', function (req, res) {
-    const taskFileName = req.body.taskName
+    const requestBody = req.body;
+    const taskFileName = 'scheduleTask/' + requestBody.taskName + fileSuffix
+    requestBody.persons = getUserList(requestBody.persons)
 
-    fs.writeFile(taskFileName + fileSuffix, JSON.stringify(req.body) + '\n', { flag: 'w+', 'encoding': 'utf-8' }, function (err) {
-    // fs.writeFile(taskFileName + fileSuffix, JSON.stringify(req.body) + '\n', { flag: 'a+', 'encoding': 'utf-8' }, function (err) {
-        if (err) {
-            console.log("文件写入失败....")
-        } else {
-            console.log("文件写入成功")
-        }
-    })
+    fs.writeFileSync(taskFileName, `${JSON.stringify(requestBody)}`, { flag: 'w+', 'encoding': 'utf-8' })
+
+    addSchedule()
 
     // 读取目录
     fs.readdir('.', function (err, files) {
         if (err) {
             console.log("目录读取失败")
         } else {
-            console.log("files....", files)
             var scheduleFiles = []
             files.forEach(file => {
                 if (file.endsWith(fileSuffix)) {
@@ -40,8 +36,8 @@ app.post('/config/save', function (req, res) {
             })
             scheduleFiles.forEach(file => {
                 var fileStr = fs.readFileSync(file, 'utf-8')
-                mySchedule.createSchedule(fileStr)
-                console.log("读取的文件内容：", file, "::::", fileStr)
+                // mySchedule.createSchedule(fileStr)
+                console.log("读取的文件内容：", file, "::::", fileStr, typeof fileStr)
             })
         }
     })
