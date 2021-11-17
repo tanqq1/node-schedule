@@ -14,33 +14,18 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.get('/', function (req, res) {
     res.send("hello world")
 })
+
+// 定时任务初始化
+addSchedule()
+// 
 app.post('/config/save', function (req, res) {
     const requestBody = req.body;
     const taskFileName = 'scheduleTask/' + requestBody.taskName + fileSuffix
     requestBody.persons = getUserList(requestBody.persons)
 
+    // 每次新增都写入文件
     fs.writeFileSync(taskFileName, `${JSON.stringify(requestBody)}`, { flag: 'w+', 'encoding': 'utf-8' })
 
-    addSchedule()
-
-    // 读取目录
-    fs.readdir('.', function (err, files) {
-        if (err) {
-            console.log("目录读取失败")
-        } else {
-            var scheduleFiles = []
-            files.forEach(file => {
-                if (file.endsWith(fileSuffix)) {
-                    scheduleFiles.push(path.resolve(__dirname, file))
-                }
-            })
-            scheduleFiles.forEach(file => {
-                var fileStr = fs.readFileSync(file, 'utf-8')
-                // mySchedule.createSchedule(fileStr)
-                console.log("读取的文件内容：", file, "::::", fileStr, typeof fileStr)
-            })
-        }
-    })
 
     res.send("post保存成功了呢")
 })

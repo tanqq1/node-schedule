@@ -8,6 +8,8 @@ app = express();
 
 exports = module.exports = {};
 
+var fileSuffix = '.schedule.js'
+
 
 exports.createSchedule = createSchedule
 
@@ -77,6 +79,30 @@ var task = cron.schedule("* * 18 * * *", function () {
 function addSchedule() {
     cron.schedule("1,2,3,4,5,6 * * * * *", function () {
         console.log("running a task every minute");
+
+        // 判断今天是否节假日，是的话就不往下执行
+
+        // 读取目录
+        fs.readdir('./scheduleTask', function (err, files) {
+            if (err) {
+                console.log("目录读取失败")
+            } else {
+                var scheduleFiles = []
+                files.forEach(file => {
+                    if (file.endsWith(fileSuffix)) {
+                        scheduleFiles.push(path.resolve(__dirname, file))
+                    }
+                })
+                scheduleFiles.forEach(file => {
+                    var fileStr = fs.readFileSync(file, 'utf-8')
+
+                    // 读取文件，每个文件走各自的配置
+                    
+                    // mySchedule.createSchedule(fileStr)
+                    console.log("读取的文件内容：", file, "::::", fileStr, typeof fileStr)
+                })
+            }
+        })
 
         // 写入日志
         // fs.link("./server.log",)
