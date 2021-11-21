@@ -37,13 +37,6 @@ async function frontEndDuty(info) {
   return result.data;
 }
 
-// 机器人key
-// var robotKey = config.robotKey;
-
-// 定时任务执行成功的话则记录下新的值班人
-// config.currentDuty = config.persons[nextDutyIndex]
-// fs.writeFileSync(filePath, JSON.stringify(config), { flag: 'w+', 'encoding': 'utf-8' })
-
 /** 值班周期为天函数处理 */
 function dutyOnWorkWeek(dutyJson) {
   // 日提醒的逻辑，可复用现在的值班逻辑

@@ -21,9 +21,9 @@ function parseDutyFilePath(filename) {
 /** 将内容写入文件 */
 function writeContentInFile(requestBody) {
   const taskFileName = parseDutyFilePath(requestBody.taskName);
-  requestBody.persons = getUserList(requestBody.persons);
+  requestBody.personList = getUserList(requestBody.personList);
   if (!requestBody.currentDuty) {
-    requestBody.currentDuty = requestBody.persons[0];
+    requestBody.currentDuty = requestBody.personList[0];
   }
   // 每次新增都覆盖写入文件
   fs.writeFileSync(taskFileName, `${JSON.stringify(requestBody)}`, {
