@@ -6,8 +6,8 @@
  */
 var dayjs = require("dayjs");
 var axios = require("axios");
-
-exports = module.exports = {};
+var fs = require('fs')
+var dateJsons = require('./date.json')
 
 // 获取今天的日期， 用来判断今天是否节假日，节假日的话就不提醒了
 // 获取明天的日期（或者今天之后的第一个工作日日期）
@@ -22,7 +22,9 @@ exports = module.exports = {};
  */
 
 //www.apihubs.cn/#/holiday
-http: var apiHubs = `https://api.apihubs.cn/holiday/get?order_by=1&cn=1&size=31`;
+http: var apiHubs = `https://api.apihubs.cn/holiday/get?year=2021&order_by=2&cn=1&size=61`;
+// http: var apiHubs = `https://api.apihubs.cn/holiday/get?order_by=1&cn=1&size=31`;
+
 // 请求接口日期
 
 function getEightDays() {
@@ -39,12 +41,16 @@ function getEightDays() {
 var requestDay;
 var eightDates;
 
+// getEightDayList('')
+
 function getEightDayList(date) {
   if (date === requestDay) {
     return eightDates;
   } else {
     axios.get(`${apiHubs}&${getEightDays()}`).then(function (res) {
       const dataList = res.data.data.list;
+      fs.writeFileSync('/2021_date.json', JSON.stringify(dataList), { flag: 'w+', 'encoding': 'utf-8' })
+
       requestDay = date;
       eightDates = dataList;
     });
@@ -120,13 +126,37 @@ function getHours() {
 //   console.log("最后的提示语......", infoText);
 // };
 
+var dateInfo = {
+  today: {},
+  tomorrow: {},
+  yesterday: {},
+  requestDay: ''
+}
+
+function getDateObject() {
+  var todayDate = dayjs().format('YYYYMMDD')
+  if (todayDate !== dateInfo.requestDay) {
+    var todayIndex = dateJsons.findIndex(d => d.date + '' === todayDate)
+    dateInfo.today = dateJsons[todayIndex]
+    dateInfo.yesterday = dateJsons[todayIndex - 1]
+    dateInfo.tomorrow = dateJsons[todayIndex + 1]
+    dateInfo.requestDay = todayDate
+    dateInfo.isLegalHolidays = isLegalHolidays(dateInfo.today)
+    dateInfo.isWorkday = isWorkday(dateInfo.today)
+    dateInfo.isFirsyDayOnWork = isFirsyDayOnWork(dateInfo.yesterday, dateInfo.today)
+    dateInfo.isLastWorkDayInWeek = isLastWorkDayInWeek( dateInfo.today,dateInfo.yesterday)
+  }
+
+  return dateInfo
+}
+
 /** 是否法定节假日 */
 function isLegalHolidays(data) {
   return data?.holiday_legal === 1;
 }
 
 // 是否节假日
-function isHoliday() {}
+function isHoliday() { }
 
 /** 是否上班日 */
 function isWorkday(data) {
@@ -154,12 +184,13 @@ function isSameWeek(yesterday, today) {
  *  2、同一周 并且昨天是放假
  */
 function isFirsyDayOnWork(yesterday, today) {
-  var isFirstDay = !isSameWeek(yesterday, today) || !isWorkday(yesterday);
-  return isFirstDay;
+  return !isSameWeek(yesterday, today) || !isWorkday(yesterday);
 }
 
 /** 是否本周最后一天工作日 */
-function isLastWorkDayInWeek() {}
+function isLastWorkDayInWeek(today, yesterday) {
+  return isSameWeek(today, yesterday) && !isWorkday(yesterday)
+ }
 
 function getNextWorkDay(days) {
   return days.find(day => isWorkday(day));
@@ -168,4 +199,5 @@ function getNextWorkDay(days) {
 exports = module.exports = {
   isWorkday,
   getEightDayList,
+  getDateObject
 };
