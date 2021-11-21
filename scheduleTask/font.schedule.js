@@ -1,1 +1,1 @@
-{ "persons": ["tanqq", "libo", "kkkk", "loo"], "period": "day", "robotKey": "25dg5-s78dn", "taskName": "font" }
+{ "personList": ["tanqq", "libo", "kkkk", "loo"], "period": "day", "robotKey": "25dg5-s78dn", "taskName": "font" }
