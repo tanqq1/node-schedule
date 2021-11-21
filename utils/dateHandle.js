@@ -144,10 +144,19 @@ function getDateObject() {
     dateInfo.isLegalHolidays = isLegalHolidays(dateInfo.today)
     dateInfo.isWorkday = isWorkday(dateInfo.today)
     dateInfo.isFirsyDayOnWork = isFirsyDayOnWork(dateInfo.yesterday, dateInfo.today)
-    dateInfo.isLastWorkDayInWeek = isLastWorkDayInWeek( dateInfo.today,dateInfo.yesterday)
+    dateInfo.isLastWorkDayInWeek = isLastWorkDayInWeek(dateInfo.today, dateInfo.yesterday)
+    if (dateInfo.isFirsyDayOnWork) {
+      dateInfo.workLengthInWeek = getWorkDayLenInWeek(dateInfo.today)
+    }
   }
 
   return dateInfo
+}
+
+/**本周工作天数 */
+function getWorkDayLenInWeek(today) {
+  var workDate = dateJsons.filter(d => { return d.yearweek_cn == today.yearweek_cn && isWorkday(d) })
+  return workDate.length
 }
 
 /** 是否法定节假日 */
@@ -190,7 +199,7 @@ function isFirsyDayOnWork(yesterday, today) {
 /** 是否本周最后一天工作日 */
 function isLastWorkDayInWeek(today, yesterday) {
   return isSameWeek(today, yesterday) && !isWorkday(yesterday)
- }
+}
 
 function getNextWorkDay(days) {
   return days.find(day => isWorkday(day));
