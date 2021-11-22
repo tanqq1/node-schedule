@@ -2,7 +2,7 @@ var express = require("express");
 var fs = require("fs");
 var url = require("url");
 var bodyParser = require("body-parser");
-var { addSchedule, getUserList } = require("./index");
+var { initSchedule } = require("./index");
 var { writeContentInFile } = require("./utils/fileHandle.js");
 
 var app = express();
@@ -10,17 +10,21 @@ var app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
+initSchedule();
+
 app.get("/", function (req, res) {
   res.send("hello world");
 });
 
 // 定时任务初始化
-addSchedule();
-//
 app.post("/config/save", function (req, res) {
   writeContentInFile(req.body);
 
-  res.send("post保存成功了呢");
+  res.send({
+    code: 0,
+    status: "success",
+    message: "请求成功",
+  });
 });
 
 app.get("/config.html", function (request, response) {

@@ -1,7 +1,7 @@
 /*
  * @Author: tanqq
  * @Date: 2021-11-18 09:34:55
- * @LastEditTime: 2021-11-18 12:36:33
+ * @LastEditTime: 2021-11-22 18:52:55
  * @Desc:
  * 执行文件的读写操作
  * 路径的解析
@@ -10,8 +10,15 @@
 var path = require("path");
 var fs = require("fs");
 
-var dutyFileDir = path.resolve("../", "scheduleTask");
+var dutyFileDir = path.resolve("scheduleTask");
 var fileSuffix = ".schedule.js";
+
+console.log("dutyFileDir", dutyFileDir);
+
+// 获取用户列表
+function getUserList(userStr) {
+  return userStr.split(",").filter(item => !!item);
+}
 
 /**值班文件路径解析 */
 function parseDutyFilePath(filename) {
@@ -25,6 +32,7 @@ function writeContentInFile(requestBody) {
   if (!requestBody.currentDuty) {
     requestBody.currentDuty = requestBody.personList[0];
   }
+
   // 每次新增都覆盖写入文件
   fs.writeFileSync(taskFileName, `${JSON.stringify(requestBody)}`, {
     flag: "w+",
