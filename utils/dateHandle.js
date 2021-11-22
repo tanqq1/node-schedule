@@ -20,48 +20,6 @@ var dateJsons = require('./date.json')
  * 今天是工作日， 今天是周一吗？是周一,那么今天作为上班第一天
  * 明天 调休吗， 下午6:30 提醒一下
  */
-
-//www.apihubs.cn/#/holiday
-http: var apiHubs = `https://api.apihubs.cn/holiday/get?year=2021&order_by=2&cn=1&size=61`;
-// http: var apiHubs = `https://api.apihubs.cn/holiday/get?order_by=1&cn=1&size=31`;
-
-// 请求接口日期
-
-function getEightDays() {
-  var dateArr = [];
-  for (var i = 0; i < 8; i++) {
-    var dateFormat = `${dayjs()
-      .add(i - 1, "day")
-      .format("YYYYMMDD")}`;
-    dateArr.push(dateFormat);
-  }
-  return "date=" + dateArr.join(",");
-}
-
-var requestDay;
-var eightDates;
-
-// getEightDayList('')
-
-function getEightDayList(date) {
-  if (date === requestDay) {
-    return eightDates;
-  } else {
-    axios.get(`${apiHubs}&${getEightDays()}`).then(function (res) {
-      const dataList = res.data.data.list;
-      fs.writeFileSync('/2021_date.json', JSON.stringify(dataList), { flag: 'w+', 'encoding': 'utf-8' })
-
-      requestDay = date;
-      eightDates = dataList;
-    });
-  }
-}
-
-// setInterval(function () {
-//   const a = onEightDays(dayjs().format("YYYYMMDD"));
-//   console.log("aaa", a, "typeof", typeof a);
-// }, 5000);
-
 function getHours() {
   var date = new Date();
   var hourGap = 8; // 时区差8个小时
@@ -207,6 +165,5 @@ function getNextWorkDay(days) {
 
 exports = module.exports = {
   isWorkday,
-  getEightDayList,
   getDateObject
 };

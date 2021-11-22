@@ -4,7 +4,6 @@ var fs = require("fs");
 var path = require("path");
 var { getScheduleFilsList } = require("./utils/fileHandle.js");
 var { onDutyHandle } = require("./utils/dutyHandle.js");
-var { getEightDayList } = require("./utils/dateHandle.js");
 
 app = express();
 
@@ -13,11 +12,6 @@ app = express();
 exports = module.exports = {};
 
 exports.createSchedule = createSchedule;
-
-// 每天下午5点请求
-cron.schedule("* * 17 * * *", function () {
-  getEightDayList();
-});
 
 function createSchedule(filePath) {
   cron.schedule("* * 18 * * *", function () {
