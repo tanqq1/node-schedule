@@ -13,11 +13,14 @@ var fs = require("fs");
 var dutyFileDir = path.resolve("scheduleTask");
 var fileSuffix = ".schedule.js";
 
-console.log("dutyFileDir", dutyFileDir);
-
 // 获取用户列表
 function getUserList(userStr) {
-  return userStr.split(",").filter(item => !!item);
+  try {
+    return JSON.parse(userStr)
+  } catch (error) {
+    console.log("获取用户列表失败", error)
+    return []
+  }
 }
 
 /**值班文件路径解析 */
@@ -29,8 +32,11 @@ function parseDutyFilePath(filename) {
 function writeContentInFile(requestBody) {
   const taskFileName = parseDutyFilePath(requestBody.taskName);
   requestBody.personList = getUserList(requestBody.personList);
-  if (!requestBody.currentDuty) {
-    requestBody.currentDuty = requestBody.personList[0];
+
+  if (!requestBody.personList.length) {
+    requestBody.currentDuty = ''
+  } else if (!requestBody.currentDuty) {
+    requestBody.currentDuty = requestBody.personList[0].id;
   }
 
   // 每次新增都覆盖写入文件

@@ -4,13 +4,14 @@
  * @LastEditTime: 2021-11-22 18:54:04
  * @Desc: 值班处理函数
  */
-var { readContentInFile } = require("./fileHandle.js");
+var { readContentInFile, writeContentInFile } = require("./fileHandle.js");
 var { getDateObject } = require("./dateHandle.js");
 var axios = require("axios");
 
 // 本周值班预览
 function dutyPreview(info) {
   const { content, mentioned_list, robotUrl } = info;
+  console.log("info.........", info)
   try {
     axios
       .post(robotUrl, {
@@ -27,7 +28,7 @@ function dutyPreview(info) {
     console.log("post error......", error);
   }
 
-  return result.data;
+  // return result.data;
 }
 
 async function frontEndDuty(info) {
@@ -47,6 +48,7 @@ async function frontEndDuty(info) {
 /** 值班周期为天函数处理 */
 function dutyOnWorkWeek(dutyJson) {
   // 日提醒的逻辑，可复用现在的值班逻辑
+  console.log("dutyJson....", dutyJson)
   var dateInfo = getDateObject();
   if (!dateInfo.isWorkday) return;
   if (dateInfo.isFirstDayOnWork) {
@@ -57,15 +59,16 @@ function dutyOnWorkWeek(dutyJson) {
       mentioned_list: [dutyJson.currentDuty],
     });
   }
+  var nextDuty = getNextDutyPerson(dutyJson.personList, dutyJson.currentDuty);
   if (dateInfo.isLastWorkDayInWeek) {
     // 下周值班人员
     frontEndDuty({
       robotUrl: dutyJson.robotKey,
       content: "无情的值班机器人来提醒啦:下周到你值班了，不要忘记哟！",
-      mentioned_list: [dutyJson.currentDuty],
+      mentioned_list: [nextDuty.id],
     });
-    var nextDuty = getNextDutyPerson(dutyJson.personList, dutyJson.currentDuty);
-    dutyJson.currentDuty = nextDuty;
+    dutyJson.currentDuty = nextDuty.id;
+    dutyJson.personList = JSON.stringify(dutyJson.personList)
     writeContentInFile(dutyJson);
     return;
   }
@@ -76,39 +79,47 @@ function dutyOnWorkWeek(dutyJson) {
 /** 值班周期为周 函数处理 */
 function dutyOnWorkDay(dutyJson) {
   // 则本周第一天提醒一次 & 本周最后一天做下周的值班预告;
+  console.log("day.........", dutyJson)
   var dateInfo = getDateObject();
   if (!dateInfo.isWorkday) return;
   // 预告
   var nextDuty = getNextDutyPerson(dutyJson.personList, dutyJson.currentDuty);
 
   if (dateInfo.isFirstDayOnWork) {
+    var content = ''
     var nextWorkDuty = getNextWeekDuty(
       dutyJson.personList,
       dutyJson.currentDuty,
       dateInfo.workLengthInWeek
     );
+
+    console.log("nextWorkDuty", nextWorkDuty)
+    for (var i = 0; i < nextWorkDuty.length; i++) {
+      content += nextWorkDuty[i].name + ','
+    }
     dutyPreview({
       mentioned_list: dutyJson.currentDuty,
       robotUrl: dutyJson.robotKey,
-      content: nextWorkDuty.join(","),
+      content: content,
     });
   }
   if (dateInfo.isLastWorkDayInWeek) {
     frontEndDuty({
       content:
         "无情的值班机器人来提醒了,下周第一天工作日到你值班了，不要忘记呦~",
-      mentioned_list: [nextDuty],
+      mentioned_list: [nextDuty.id],
       robotUrl: dutyJson.robotKey,
     });
   }
-
-  dutyJson.currentDuty = nextDuty;
+  dutyJson.personList = JSON.stringify(dutyJson.personList)
+  dutyJson.currentDuty = nextDuty.id;
   writeContentInFile(dutyJson);
 }
 
 /** 解析文件参数，判断走周提醒还是日提醒 */
 function onDutyHandle(filePath) {
   var json = readContentInFile(filePath);
+  if (!json.personList.length) return
   if (json.period == "day") {
     dutyOnWorkDay(json);
   } else {
@@ -119,9 +130,9 @@ function onDutyHandle(filePath) {
 /** 获取下一个值班人员 */
 function getNextDutyPerson(personList, currentDuty) {
   if (!currentDuty) {
-    return personList[0];
+    return personList[0].id;
   }
-  var nextDutyIndex = personList.indexOf(currentDuty) + 1;
+  var nextDutyIndex = personList.findIndex(function (p) { p.id == currentDuty }) + 1;
   if (nextDutyIndex > personList.length - 1) {
     nextDutyIndex = 0;
   }
@@ -133,18 +144,22 @@ function getNextWeekDuty(personList, currentDuty, count) {
   try {
     var dutyIndex =
       personList.findIndex(function (p) {
-        return p == currentDuty;
+        return p.id == currentDuty;
       }) || 0;
     var personLen = personList.length;
     var endDutyIndex = dutyIndex + count + 1;
+
+    var list = personList.slice(dutyIndex + 1, endDutyIndex);
+
     if (endDutyIndex < personLen) {
-      return personList.slice(dutyIndex, endDutyIndex);
+      return list;
     }
+    return list.concat(personList.slice(0, endDutyIndex - personLen));
+
   } catch (error) {
     console.log(error);
   }
-  var list = personList.slice(dutyIndex, endDutyIndex);
-  return list.concat(personList.slice(0, endDutyIndex - personLen));
+
 }
 
 exports = module.exports = {
