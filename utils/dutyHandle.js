@@ -11,7 +11,7 @@ var axios = require("axios");
 // 本周值班预览
 function dutyPreview(info) {
   const { content, mentioned_list, robotUrl } = info;
-  console.log("info.........", info)
+  // console.log("info.........", info)
   try {
     axios
       .post(robotUrl, {
@@ -27,28 +27,26 @@ function dutyPreview(info) {
   } catch (error) {
     console.log("post error......", error);
   }
-
-  // return result.data;
 }
 
-async function frontEndDuty(info) {
+function frontEndDuty(info) {
   const { content, mentioned_list, robotUrl } = info;
 
-  let result = await axios.post(robotUrl, {
+  axios.post(robotUrl, {
     msgtype: "text",
     text: {
       content: content,
       mentioned_list: mentioned_list,
     },
+  }).then(res => {
+    console.log("值班提醒发送成功.....", res.data);
   });
 
-  return result.data;
 }
 
 /** 值班周期为天函数处理 */
 function dutyOnWorkWeek(dutyJson) {
   // 日提醒的逻辑，可复用现在的值班逻辑
-  console.log("dutyJson....", dutyJson)
   var dateInfo = getDateObject();
   if (!dateInfo.isWorkday) return;
   if (dateInfo.isFirstDayOnWork) {
@@ -78,42 +76,52 @@ function dutyOnWorkWeek(dutyJson) {
 
 /** 值班周期为周 函数处理 */
 function dutyOnWorkDay(dutyJson) {
-  // 则本周第一天提醒一次 & 本周最后一天做下周的值班预告;
-  console.log("day.........", dutyJson)
-  var dateInfo = getDateObject();
-  if (!dateInfo.isWorkday) return;
-  // 预告
-  var nextDuty = getNextDutyPerson(dutyJson.personList, dutyJson.currentDuty);
+  try {
+    // 则本周第一天提醒一次 & 本周最后一天做下周的值班预告;
+    var dateInfo = getDateObject();
+    if (!dateInfo.isWorkday) return;
+    // 预告
+    var nextDuty = getNextDutyPerson(dutyJson.personList, dutyJson.currentDuty);
 
-  if (dateInfo.isFirstDayOnWork) {
-    var content = ''
-    var nextWorkDuty = getNextWeekDuty(
-      dutyJson.personList,
-      dutyJson.currentDuty,
-      dateInfo.workLengthInWeek
-    );
+    if (dateInfo.isFirstDayOnWork) {
+      var content = ''
+      var nextWorkDuty = getNextWeekDuty(
+        dutyJson.personList,
+        dutyJson.currentDuty,
+        dateInfo.workLengthInWeek
+      );
 
-    console.log("nextWorkDuty", nextWorkDuty)
-    for (var i = 0; i < nextWorkDuty.length; i++) {
-      content += nextWorkDuty[i].name + ','
+      console.log("nextWorkDuty", nextWorkDuty)
+      for (var i = 0; i < nextWorkDuty.length; i++) {
+        content += nextWorkDuty[i].name + ','
+      }
+      dutyPreview({
+        mentioned_list: dutyJson.currentDuty,
+        robotUrl: dutyJson.robotKey,
+        content: content,
+      });
+    } else if (dateInfo.isLastWorkDayInWeek) {
+      frontEndDuty({
+        content:
+          "无情的值班机器人来提醒了,下周第一天工作日到你值班了，不要忘记呦~",
+        mentioned_list: [nextDuty.id],
+        robotUrl: dutyJson.robotKey,
+      });
+    } else {
+      frontEndDuty({
+        content:
+          "无情的值班机器人来提醒啦,明天带你值班了，不要忘记呦~",
+        mentioned_list: [nextDuty.id],
+        robotUrl: dutyJson.robotKey,
+      });
     }
-    dutyPreview({
-      mentioned_list: dutyJson.currentDuty,
-      robotUrl: dutyJson.robotKey,
-      content: content,
-    });
+    dutyJson.personList = JSON.stringify(dutyJson.personList)
+    dutyJson.currentDuty = nextDuty.id;
+    writeContentInFile(dutyJson);
+  } catch (error) {
+    console.log(error);
+
   }
-  if (dateInfo.isLastWorkDayInWeek) {
-    frontEndDuty({
-      content:
-        "无情的值班机器人来提醒了,下周第一天工作日到你值班了，不要忘记呦~",
-      mentioned_list: [nextDuty.id],
-      robotUrl: dutyJson.robotKey,
-    });
-  }
-  dutyJson.personList = JSON.stringify(dutyJson.personList)
-  dutyJson.currentDuty = nextDuty.id;
-  writeContentInFile(dutyJson);
 }
 
 /** 解析文件参数，判断走周提醒还是日提醒 */
@@ -132,7 +140,7 @@ function getNextDutyPerson(personList, currentDuty) {
   if (!currentDuty) {
     return personList[0].id;
   }
-  var nextDutyIndex = personList.findIndex(function (p) { p.id == currentDuty }) + 1;
+  var nextDutyIndex = personList.findIndex(function (p) { return p.id == currentDuty }) + 1;
   if (nextDutyIndex > personList.length - 1) {
     nextDutyIndex = 0;
   }
